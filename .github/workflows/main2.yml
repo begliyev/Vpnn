@@ -1,0 +1,35 @@
+name: Simple Shadowsocks Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-shadowsocks:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Shadowsocks-rust
+      run: |
+        sudo apt-get update
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
+        cargo install shadowsocks-rust --features "rustls"
+        sudo mkdir -p /etc/shadowsocks
+        sudo bash -c 'cat > /etc/shadowsocks/config.json <<EOF
+        {
+          "server": "0.0.0.0",
+          "server_port": 8388,
+          "password": "3599HSATA",
+          "method": "chacha20-ietf-poly1305",
+          "mode": "tcp_and_udp"
+        }
+        EOF'
+        sudo nohup ssserver -c /etc/shadowsocks/config.json &
+
+    - name: Get Server IP
+      run: |
+        echo "Shadowsocks sunucusu aktif! IP: $(curl -s ifconfig.me)"
+        echo "Port: 8388, Şifre: ${{ secrets.SHADOWSOCKS_PASSWORD }}, Şifreleme: chacha20-ietf-poly1305"
+
+    - name: Keep Server Running
+      run: |
+        sleep 3600 
